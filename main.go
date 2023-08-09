@@ -9,7 +9,7 @@ import (
 func main() {
 	port := ":" + os.Args[1]
 
-	err := receiver.runServer(port)
+	err := receiver.RunServer(port)
 
 	if err != nil {
 		fmt.Println("\nError starting server:", err)
