@@ -1,27 +1,40 @@
 package receiver
 
 import (
+	"bufio"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 )
 
-func RunServer(port string) error {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		username := r.URL.Query().Get("username")
-		log.Printf("User %s visited the homepage\n", username)
-		fmt.Fprintf(w, "Hello, %s!", username)
-	})
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
 
-	fs := http.FileServer(http.Dir("static/"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	fmt.Printf("Server Start is: http://localhost%s/\n", port)
-
-	err := http.ListenAndServe(port, nil)
-	if err != nil {
-		return err
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
 	}
 
-	return nil
+	if err := scanner.Err(); err != nil {
+		log.Println("Error reading from connection:", err)
+	}
+}
+
+func Listener() {
+	listener, err := net.Listen("tcp", "localhost:8080")
+	if err != nil {
+		log.Fatal("Error starting listener:", err)
+	}
+
+	fmt.Println("Listening on localhost:8080...")
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Println("Error accepting connection:", err)
+			continue
+		}
+
+		go handleConnection(conn)
+	}
 }
